@@ -11,7 +11,7 @@ This is still a development version lacking some features. Features request, bug
 * Better documentation
 * Background computations
 * Prettyprinting using TeXmacs formatting
-* Syntax Highlight in sessions (this will require to change the C++ sources)
+* Syntax highlight in sessions (this will require to change the C++ sources)
 
 
 

@@ -31,6 +31,7 @@ import Base.Libc: flush_cstdio
 import REPL: helpmode
 import REPL.REPLCompletions: completions, completion_text
 using REPL
+import UUIDs
 import Markdown
 import Base: AbstractDisplay, display, redisplay, catch_stack, show
 
@@ -162,20 +163,26 @@ end
 struct InlineDisplay <: AbstractDisplay end
 
 showtofile(file::AbstractString, m::MIME, x) = begin
-    open(file, "w") do io
+    open("$(ENV["TEXMACS_HOME_PATH"])/system/tmp/$(file)", "w") do io
         show(io, m, x)
     end
     tm_out("file:", file)
 end
 
+sendimage(ext::AbstractString, m::MIME, x) = begin
+    buf = IOBuffer()
+    show(buf, m, x)
+    tm_out("texmacs:","<image|<tuple|<#$(bytes2hex(take!(buf)))>|julia-output-$(UUIDs.uuid1()).$(ext)>|0.618par|||>")
+end
+
 display(d::InlineDisplay, m::MIME"image/png", x) = 
-    showtofile("$(ENV["TEXMACS_HOME_PATH"])/system/tmp/tmjulia_out_$(getpid()).png", m, x)
+    sendimage("png", m, x)
 
 display(d::InlineDisplay, m::MIME"image/jpeg", x) = 
-    showtofile("$(ENV["TEXMACS_HOME_PATH"])/system/tmp/tmjulia_out_$(getpid()).jpg", m, x)
+    sendimage("jpg", m, x)
 
 display(d::InlineDisplay, m::MIME"application/pdf", x) = 
-    showtofile("$(ENV["TEXMACS_HOME_PATH"])/system/tmp/tmjulia_out_$(getpid()).pdf", m, x)
+    sendimage("pdf", m, x)
 
 display(d::InlineDisplay, m::MIME"text/html", x) = 
     tm_out("html:", limitstringmime(m, x))
