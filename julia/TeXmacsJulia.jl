@@ -38,8 +38,6 @@ import Base: AbstractDisplay, display, redisplay, catch_stack, show
 const current_module = Ref{Module}(Main)
 const orig_stdout = Ref{IO}(stdout)
 const orig_stderr = Ref{IO}(stderr)
-const read_stdout = Ref{Base.PipeEndpoint}()
-const read_stderr = Ref{Base.PipeEndpoint}()
 	
 #=============================================================================#
 ## TeXmacs protocol
@@ -66,7 +64,10 @@ tm_end() = begin
     flush(orig_stdout[]) 
 end
 
-tm_out(data) = write(orig_stdout[], texmacs_escape(data))
+tm_out(data) = begin
+    write(orig_stdout[], texmacs_escape(data))
+    flush(orig_stdout[]) 
+end
 
 tm_out(header, data) = begin
     write(orig_stdout[], 
@@ -79,6 +80,7 @@ tm_err(header, data) = begin
         DATA_BEGIN, header, texmacs_escape(data), DATA_END)
     flush(orig_stderr[]) 
 end
+
 #=============================================================================#
 ### Flush all redirected streams to TeXmacs
 
@@ -86,18 +88,6 @@ function flush_all()
     flush_cstdio() # flush writes to stdout/stderr by external C code
     flush(stdout)
     flush(stderr)
-end
-
-flush_output() = begin
-    flush_all() # flush pending stdio
-    local buf
-    # add one more char so that we do not block on readavailable later
-    write(stdout,"!")
-    buf = String(readavailable(read_stdout[]));
-    buf != "!" && tm_out(chop(buf) * "\n")
-    write(stderr,"!")
-    buf = String(readavailable(read_stderr[]));
-    buf != "!" && tm_err(VERBATIM, chop(buf))
 end
 
 #=============================================================================#
@@ -108,12 +98,13 @@ end
 # can set properties like `color`.
 struct TMJuliaStdio{IO_t <: IO} <: Base.AbstractPipe
     io::IOContext{IO_t}
+    read_stream::Base.PipeEndpoint
 end
 
-TMJuliaStdio(io::IO, stream::AbstractString="unknown") =
+TMJuliaStdio(io::IO, read_stream::Base.PipeEndpoint, stream::AbstractString="unknown") =
     TMJuliaStdio{typeof(io)}(IOContext(io, :color=>false,
                             :texmacs_stream=>stream,
-                            :displaysize=>displaysize()))
+                            :displaysize=>displaysize()), read_stream)
 Base.pipe_reader(io::TMJuliaStdio) = io.io.io
 Base.pipe_writer(io::TMJuliaStdio) = io.io.io
 Base.lock(io::TMJuliaStdio) = lock(io.io.io)
@@ -125,6 +116,20 @@ Base.get(io::TMJuliaStdio, key, default) = get(io.io, key, default)
 Base.displaysize(io::TMJuliaStdio) = displaysize(io.io)
 Base.unwrapcontext(io::TMJuliaStdio) = Base.unwrapcontext(io.io)
 Base.setup_stdio(io::TMJuliaStdio, readable::Bool) = Base.setup_stdio(io.io.io, readable)
+
+Base.flush(io::TMJuliaStdio) = begin
+    write(orig_stdout[],"FLUSHING $(get(io.io, :texmacs_stream, "error"))\n")
+    Base.flush(io.io.io)
+    # add one more char so that we do not block on readavailable later
+    write(io.io.io,"!")
+    local buf = chop(String(readavailable(io.read_stream)));
+    buf == "" && return
+    if get(io.io, :texmacs_stream, "error") == "stdout"
+        tm_out(chop(buf) * "\n")
+    elseif get(io.io, :texmacs_stream, "error") == "stderr"
+        tm_err(VERBATIM, chop(buf))
+    end
+end
 
 if VERSION < v"1.7.0-DEV.254"
     for s in ("stdout", "stderr", "stdin")
@@ -253,11 +258,12 @@ end
 # we can then catch InterruptException
 Base.exit_on_sigint(false)
 
+local read_stdout, read_stderr
 # redirect output/error
-read_stdout[], = redirect_stdout()
-redirect_stdout(TMJuliaStdio(stdout,"stdout"))
-read_stderr[], = redirect_stderr()
-redirect_stderr(TMJuliaStdio(stderr,"stderr"))
+read_stdout, = redirect_stdout()
+redirect_stdout(TMJuliaStdio(stdout,read_stdout,"stdout"))
+read_stderr, = redirect_stderr()
+redirect_stderr(TMJuliaStdio(stderr,read_stderr,"stderr"))
 #redirect_stdin(TMJuliaStdio(stdin,"stdin"))
 
 # redirect display
@@ -328,7 +334,8 @@ while true
         write(stdout, "Error showing values $(e)");
         Base.invokelatest(Base.display_error, stderr, catch_stack())
     end
-    flush_output() # send all to texmacs
+    flush_all() # send all to texmacs
+#    flush_output() # send all to texmacs
     tm_end()
 end # while true
 
