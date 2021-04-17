@@ -118,7 +118,7 @@ Base.unwrapcontext(io::TMJuliaStdio) = Base.unwrapcontext(io.io)
 Base.setup_stdio(io::TMJuliaStdio, readable::Bool) = Base.setup_stdio(io.io.io, readable)
 
 Base.flush(io::TMJuliaStdio) = begin
-    write(orig_stdout[],"FLUSHING $(get(io.io, :texmacs_stream, "error"))\n")
+    #write(orig_stdout[],"FLUSHING $(get(io.io, :texmacs_stream, "error"))\n")
     Base.flush(io.io.io)
     # add one more char so that we do not block on readavailable later
     write(io.io.io,"!")
