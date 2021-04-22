@@ -202,18 +202,31 @@ display(d::InlineDisplay, m::MIME"text/plain", s::AbstractString) =
     tm_out(s)
 
 # fallback
-function display(d::InlineDisplay, m::MIME, x) 
-    buf = IOBuffer()
-    show(buf, m, x)
-    tm_out(String(take!(buf)))
-end
+display(d::InlineDisplay, m::MIME, x) =
+    tm_out(limitstringmime(m, x))
 
 # generic display overloading
-
 display(d::InlineDisplay, x::Markdown.MD) = display(d, MIME("text/markdown"), x) 
 
-# default behaviour is showing text
+# we try to display data according to these mime types
+# in order
+const tm_mimetypes = [
+    MIME("image/svg"),
+    MIME("application/pdf"),
+    MIME("image/png"),
+    MIME("image/jpg"),
+    MIME("text/html"), 
+    MIME("text/markdown"), 
+    MIME("text/plain")]
+
 function display(d::InlineDisplay, x)
+    for m in tm_mimetypes
+        if showable(m, x)
+            display(d, m, x)
+            return
+        end
+    end
+    # default behaviour is showing text
     display(d, MIME("text/plain"), x)
 #    tm_out("TODO: display an object of type [$(typeof(x))]")   
 end
