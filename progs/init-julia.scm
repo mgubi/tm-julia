@@ -29,6 +29,7 @@
         (string-append "julia " boot))))
 
 (plugin-configure julia
+  (:winpath "Julia" "bin")
   (:require (url-exists-in-path? "julia"))
   (:serializer ,julia-serialize)
   (:launch ,(julia-launcher))
