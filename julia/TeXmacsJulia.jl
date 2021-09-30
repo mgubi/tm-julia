@@ -217,7 +217,7 @@ const tm_mimetypes = [
     MIME("image/jpg"),
     MIME("text/html"), 
     MIME("text/markdown"), 
-    MIME("text/plain")]
+    MIME("text/latex")]
 
 function display(d::InlineDisplay, x)
     for m in tm_mimetypes
