@@ -125,9 +125,9 @@ Base.flush(io::TMJuliaStdio) = begin
     local buf = chop(String(readavailable(io.read_stream)));
     buf == "" && return
     if get(io.io, :texmacs_stream, "error") == "stdout"
-        tm_out(chop(buf) * "\n")
+        tm_out(buf * "\n")
     elseif get(io.io, :texmacs_stream, "error") == "stderr"
-        tm_err(VERBATIM, chop(buf))
+        tm_err(VERBATIM, buf)
     end
 end
 
