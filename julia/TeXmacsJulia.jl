@@ -327,6 +327,10 @@ while true
             display(help)
         else
             # finally run the code! 
+			# check whether Revise is running and run it before every prompt
+			if isdefined(Main, :Revise)
+			    Main.Revise.revise()
+			end
             result = include_string(current_module[], code, "In[$n]")
             REPL.ends_with_semicolon(code) ? result = nothing : ans = result
         end
