@@ -257,7 +257,11 @@ function do_tab_complete(cmd::AbstractString)
         if isa(arg1,AbstractString) && isa(arg2,Integer)
             ret,range,shouldcomplete = completions(arg1,arg2)
             compls = join(unique!(map(x -> "\"$(completion_text(x)[range.stop+2-range.start:end])\"",ret))," ")
-            tm_out("scheme:", "(tuple \"$(arg1[range])\" $(compls))")
+            if !isempty(range)
+				tm_out("scheme:", "(tuple \"$(arg1[range])\" $(compls))")
+			else
+				tm_out("scheme:", "(tuple \"$(arg1[range.stop])\" $(compls))")
+			end			
         end
     catch e 
         # ignore errors 
