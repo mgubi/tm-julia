@@ -257,7 +257,11 @@ function do_tab_complete(cmd::AbstractString)
         if isa(arg1,AbstractString) && isa(arg2,Integer)
             ret,range,shouldcomplete = completions(arg1,arg2)
             compls = join(unique!(map(x -> "\"$(completion_text(x)[range.stop+2-range.start:end])\"",ret))," ")
-            tm_out("scheme:", "(tuple \"$(arg1[range])\" $(compls))")
+            if !isempty(range)
+				tm_out("scheme:", "(tuple \"$(arg1[range])\" $(compls))")
+			else
+				tm_out("scheme:", "(tuple \"$(arg1[range.stop])\" $(compls))")
+			end			
         end
     catch e 
         # ignore errors 
@@ -327,6 +331,10 @@ while true
             display(help)
         else
             # finally run the code! 
+			# check whether Revise is running and run it before every prompt
+			if isdefined(Main, :Revise)
+			    Main.Revise.revise()
+			end
             result = include_string(current_module[], code, "In[$n]")
             REPL.ends_with_semicolon(code) ? result = nothing : ans = result
         end
