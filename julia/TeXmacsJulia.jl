@@ -292,7 +292,7 @@ tm_end()
 n = 0 # execution counter
 ans = nothing # record last successful answer in ans
 
-while true
+while !eof(stdin)
     line = readline(stdin)
     length(line) == 0 && continue
     if line[1] == DATA_COMMAND
