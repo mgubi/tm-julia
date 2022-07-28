@@ -1,3 +1,6 @@
+This fork has been moved to [Codeberg](https://codeberg.org/woutersj/tm-julia).
+
+
 # tm-julia
 
 A [TeXmacs](https://www.texmacs.org/tmweb/home/welcome.en.html) plugin for the [Julia](https://julialang.org) language
