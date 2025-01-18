@@ -30,6 +30,7 @@
 
 (plugin-configure julia
   (:winpath "Julia" "bin")
+  (:macpath "Julia*" "Contents/Resources/julia/bin")
   (:require (url-exists-in-path? "julia"))
   (:serializer ,julia-serialize)
   (:launch ,(julia-launcher))

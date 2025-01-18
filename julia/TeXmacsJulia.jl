@@ -236,7 +236,7 @@ end
 
 function banner()
     io = IOBuffer()
-    Base.banner(io)
+    REPL.banner(io)
     tm_out(String(take!(io)))
 end
 
