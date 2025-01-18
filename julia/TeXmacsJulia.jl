@@ -236,11 +236,14 @@ end
 
 function banner()
     io = IOBuffer()
-    if VERSION > v"1.11"
+    if isdefined(REPL,:banner)
         REPL.banner(io)
-    else
+    elseif isdefined(Base,:banner)
         Base.banner(io)
-    end
+    else
+        write(io, "Cannot find the startup banner, sorry!\n");
+    end    
+    write(io, "(with TeXmacs' Julia plugin)\n");
     tm_out(String(take!(io)))
 end
 
