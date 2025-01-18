@@ -236,6 +236,8 @@ end
 
 function banner()
     io = IOBuffer()
+    # the Julia banner is in REPL in Julia >1.11, and in Base before that
+    # so we need to do a little chasing
     if isdefined(REPL,:banner)
         REPL.banner(io)
     elseif isdefined(Base,:banner)
