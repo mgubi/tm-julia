@@ -236,7 +236,11 @@ end
 
 function banner()
     io = IOBuffer()
-    REPL.banner(io)
+    if VERSION > v"1.11"
+        REPL.banner(io)
+    else
+        Base.banner(io)
+    end
     tm_out(String(take!(io)))
 end
 
